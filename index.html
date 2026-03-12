@@ -29,22 +29,21 @@
         :root { color-scheme: dark; }
         body { 
             font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-            -webkit-tap-highlight-color: transparent; /* Evita parpadeos azules al tocar en Android/iOS */
-            touch-action: manipulation; /* Optimiza retraso de 300ms */
-            user-select: none; /* Sensación nativa: texto no seleccionable globalmente */
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            user-select: none;
             -webkit-user-select: none;
             background-color: #0A0A0C;
             overscroll-behavior: none;
         }
         html { overscroll-behavior: none; }
         
-        input, textarea {
-            user-select: auto; /* Permite selección solo en inputs */
+        input, textarea, select {
+            user-select: auto;
             -webkit-user-select: auto;
-            font-size: 16px !important; /* Previene el Auto-Zoom en inputs de iOS Safari */
+            font-size: 16px !important;
         }
         
-        /* Ocultar barra de scroll para estética nativa */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
@@ -55,7 +54,7 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        // --- Componentes de Iconos (Adaptados a FontAwesome) ---
+        // --- Componentes de Iconos ---
         const Icon = ({ name, size = 18, className = "" }) => (
             <i className={`${name} ${className}`} style={{ fontSize: size, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: size, height: size }}></i>
         );
@@ -80,6 +79,9 @@
         const Moon = (p) => <Icon name="fa-solid fa-moon" {...p} />;
         const Smartphone = (p) => <Icon name="fa-solid fa-mobile-screen-button" {...p} />;
         const Pen = (p) => <Icon name="fa-solid fa-pen" {...p} />;
+        const Calculator = (p) => <Icon name="fa-solid fa-calculator" {...p} />;
+        const Weight = (p) => <Icon name="fa-solid fa-weight-hanging" {...p} />;
+        const VideoIcon = (p) => <Icon name="fa-solid fa-video" {...p} />;
 
         // --- Aplicación Principal ---
         const App = () => {
@@ -91,18 +93,49 @@
             const [currentMesocycle, setCurrentMesocycle] = useState(1);
             const [currentWeek, setCurrentWeek] = useState(1);
             
-            // Cargar datos de localStorage si existen, o iniciar vacío
+            // Cargar datos de localStorage
             const [plan, setPlan] = useState(() => {
                 const savedPlan = localStorage.getItem('sprintRelaxPlan');
                 return savedPlan ? JSON.parse(savedPlan) : {};
             }); 
             
+            // Estado Editor
             const [sessionType, setSessionType] = useState('carrera');
             const [sessionName, setSessionName] = useState('');
             const [intervals, setIntervals] = useState([]); 
             const [swimBlocks, setSwimBlocks] = useState([]);
             const [ropeBlocks, setRopeBlocks] = useState([]);
             const [exercises, setExercises] = useState([]);
+
+            // Estado Herramientas
+            const [activeTool, setActiveTool] = useState('vam');
+
+            // Estado VAM
+            const [vamDistance, setVamDistance] = useState('2000');
+            const [vamMin, setVamMin] = useState('7');
+            const [vamSec, setVamSec] = useState('30');
+
+            // Estado Dominadas
+            const [pullupBw, setPullupBw] = useState('75');
+            const [pullupAw, setPullupAw] = useState('20');
+            const [pullupReps, setPullupReps] = useState('5');
+            const [targetReps, setTargetReps] = useState('8');
+            const [targetRpe, setTargetRpe] = useState('8');
+
+            // Estado Press Banca
+            const [benchWeight, setBenchWeight] = useState('80');
+            const [benchReps, setBenchReps] = useState('5');
+            const [benchTargetReps, setBenchTargetReps] = useState('8');
+            const [benchTargetRpe, setBenchTargetRpe] = useState('8');
+
+            // Estado VBT
+            const [vbtExercise, setVbtExercise] = useState('sentadilla');
+            const [vbtRom, setVbtRom] = useState('60');
+            const [vbtWeight, setVbtWeight] = useState('100');
+            const [vbtVideoUrl, setVbtVideoUrl] = useState(null);
+            const [vbtStartTime, setVbtStartTime] = useState(null);
+            const [vbtEndTime, setVbtEndTime] = useState(null);
+            const videoRef = useRef(null);
 
             const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
             const weekScrollRef = useRef(null);
@@ -114,11 +147,11 @@
                 setShowInstallBanner(!isPWA);
             }, []);
 
-            // Guardar en localStorage cada vez que el plan cambia
             useEffect(() => {
                 localStorage.setItem('sprintRelaxPlan', JSON.stringify(plan));
             }, [plan]);
 
+            // --- Lógica Navegación ---
             const handlePrevMeso = () => {
                 if (currentMesocycle > 1) {
                     const newMeso = currentMesocycle - 1;
@@ -164,7 +197,7 @@
                 else if (sessionType === 'descanso') data = [];
 
                 const key = `${editingDay.week}-${editingDay.day}`;
-                const existingNotes = plan[key]?.notasAlumno || ''; // Mantener las notas del alumno si ya existían
+                const existingNotes = plan[key]?.notasAlumno || '';
                 
                 setPlan({
                     ...plan,
@@ -179,16 +212,12 @@
                 setActiveTab('calendario');
             };
 
-            // Función para actualizar el diario/notas del alumno
             const updateStudentNotes = (week, day, notes) => {
                 const key = `${week}-${day}`;
                 if(plan[key]) {
                     setPlan(prev => ({
                         ...prev,
-                        [key]: {
-                            ...prev[key],
-                            notasAlumno: notes
-                        }
+                        [key]: { ...prev[key], notasAlumno: notes }
                     }));
                 }
             };
@@ -216,16 +245,6 @@
                 if (listType === 'cuerda') setRopeBlocks(ropeBlocks.filter(i => i.id !== id));
             };
 
-            const s = {
-                bg: 'bg-[#0A0A0C]',
-                card: 'bg-[#141417] border-[#27272A]',
-                textMain: 'text-[#F4F4F5]',
-                textSec: 'text-[#A1A1AA]',
-                accent: 'text-[#06B6D4]',
-                inputBg: 'bg-[#18181B]',
-                header: 'bg-[#0A0A0C]/90 border-[#1F1F23]'
-            };
-
             const getSessionTheme = (type) => {
                 switch (type) {
                     case 'carrera': return { bg: 'bg-cyan-500/10', border: 'border-cyan-500/30', accent: 'text-cyan-400', iconBg: 'bg-cyan-500/20', icon: <Zap size={18}/> };
@@ -236,6 +255,92 @@
                 }
             };
 
+            // --- Cálculos VAM ---
+            const calculateVAM = () => {
+                const d = parseFloat(vamDistance) || 0;
+                const m = parseInt(vamMin) || 0;
+                const s = parseInt(vamSec) || 0;
+                const totalSeconds = (m * 60) + s;
+                if (d === 0 || totalSeconds === 0) return 0;
+                return (d / totalSeconds) * 3.6;
+            };
+            const getPace100m = (vamKmh, percent) => {
+                if (vamKmh === 0) return "0:00";
+                const targetVamKmh = vamKmh * (percent / 100);
+                const targetMs = targetVamKmh / 3.6;
+                if (targetMs === 0) return "0:00";
+                const sec100m = 100 / targetMs;
+                const mins = Math.floor(sec100m / 60);
+                const secs = Math.floor(sec100m % 60);
+                return `${mins}:${secs.toString().padStart(2, '0')}`;
+            };
+            const currentVam = calculateVAM();
+
+            // --- Cálculos Dominadas ---
+            const bw = parseFloat(pullupBw) || 0;
+            const aw = parseFloat(pullupAw) || 0;
+            const reps = parseInt(pullupReps) || 0;
+            const tReps = parseInt(targetReps) || 0;
+            const tRpe = parseFloat(targetRpe) || 0;
+
+            const totalWeight = bw + aw;
+            const total1Rm = reps > 0 ? totalWeight * (1 + reps / 30) : 0;
+            const lastre1Rm = total1Rm - bw;
+            const rir = Math.max(0, 10 - tRpe);
+            const theoreticalReps = tReps + rir;
+            const targetTotalWeight = theoreticalReps > 0 && total1Rm > 0 ? total1Rm / (1 + theoreticalReps / 30) : 0;
+            const recommendedLastre = targetTotalWeight > 0 ? targetTotalWeight - bw : 0;
+
+            const formatLastre = (weight) => {
+                if (weight > 0) return `+${weight.toFixed(1)} kg`;
+                if (weight < 0) return `-${Math.abs(weight).toFixed(1)} kg (Gomas/Asistidas)`;
+                return `0 kg (Peso corporal)`;
+            };
+
+            // --- Cálculos Press Banca ---
+            const bWeight = parseFloat(benchWeight) || 0;
+            const bReps = parseInt(benchReps) || 0;
+            const bTReps = parseInt(benchTargetReps) || 0;
+            const bTRpe = parseFloat(benchTargetRpe) || 0;
+
+            const bench1Rm = bReps > 0 ? bWeight * (1 + bReps / 30) : 0;
+            const bRir = Math.max(0, 10 - bTRpe);
+            const bTheoreticalReps = bTReps + bRir;
+            const recommendedBenchWeight = bTheoreticalReps > 0 && bench1Rm > 0 ? bench1Rm / (1 + bTheoreticalReps / 30) : 0;
+
+            // --- Cálculos VBT ---
+            const handleVideoUpload = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    setVbtVideoUrl(URL.createObjectURL(file));
+                    setVbtStartTime(null);
+                    setVbtEndTime(null);
+                }
+            };
+            const markTime = (type) => {
+                if (videoRef.current) {
+                    if (type === 'start') setVbtStartTime(videoRef.current.currentTime);
+                    if (type === 'end') setVbtEndTime(videoRef.current.currentTime);
+                }
+            };
+            const vbtTime = (vbtStartTime !== null && vbtEndTime !== null && vbtEndTime > vbtStartTime) ? (vbtEndTime - vbtStartTime) : 0;
+            const vbtVelocity = vbtTime > 0 ? (parseFloat(vbtRom) / 100) / vbtTime : 0;
+            const calculateVbt1Rm = () => {
+                if (vbtVelocity <= 0 || !vbtWeight) return 0;
+                let percent1Rm = 0;
+                const v = vbtVelocity;
+                if (vbtExercise === 'sentadilla') percent1Rm = 120 - 66.6 * v;
+                else if (vbtExercise === 'banca') percent1Rm = 108.5 - 57 * v;
+                else if (vbtExercise === 'muerto') percent1Rm = 110 - 66.6 * v;
+                else if (vbtExercise === 'dominadas') percent1Rm = 111.4 - 57.1 * v;
+                
+                if (percent1Rm > 100) percent1Rm = 100;
+                if (percent1Rm < 30) percent1Rm = 30;
+                return parseFloat(vbtWeight) / (percent1Rm / 100);
+            };
+            const currentVbt1Rm = calculateVbt1Rm();
+
+            // --- Componente UI Secundario ---
             const WeekSelector = () => {
                 const weeksInMeso = [startWeek, startWeek + 1, startWeek + 2, startWeek + 3];
                 return (
@@ -273,8 +378,8 @@
             };
 
             return (
-                <div className={`min-h-screen ${s.bg} ${s.textSec} transition-all duration-300 font-sans`}>
-                    {/* Smart Banner Instalación iOS/Android */}
+                <div className={`min-h-screen bg-[#0A0A0C] text-[#A1A1AA] transition-all duration-300 font-sans`}>
+                    {/* Instalación Banner */}
                     {showInstallBanner && activeTab !== 'editor' && (
                         <div className="bg-[#06B6D4]/10 border-b border-[#06B6D4]/20 py-2.5 px-4 flex items-center justify-between pt-[max(0.5rem,env(safe-area-inset-top))]">
                             <div className="flex items-center gap-2">
@@ -285,19 +390,21 @@
                         </div>
                     )}
 
-                    {/* Header Nativo (Respeta Safe Area) */}
-                    <header className={`sticky top-0 z-40 backdrop-blur-xl border-b ${s.header} px-6 ${showInstallBanner ? 'py-4' : 'pt-[max(1rem,env(safe-area-inset-top))] pb-4'}`}>
+                    {/* Header */}
+                    <header className={`sticky top-0 z-40 backdrop-blur-xl border-b bg-[#0A0A0C]/90 border-[#1F1F23] px-6 ${showInstallBanner ? 'py-4' : 'pt-[max(1rem,env(safe-area-inset-top))] pb-4'}`}>
                         <div className="max-w-xl mx-auto flex justify-between items-center">
                             <div className="flex items-center gap-3">
                                 <div className="w-9 h-9 bg-[#06B6D4] rounded-xl flex items-center justify-center shadow-lg shadow-cyan-500/20"><Zap size={18} className="text-black" /></div>
-                                <h1 className={`text-xl font-black tracking-tighter ${s.textMain}`}>SPRINT <span className="text-[#06B6D4]">&</span> RELAX</h1>
+                                <h1 className="text-xl font-black tracking-tighter text-[#F4F4F5]">SPRINT <span className="text-[#06B6D4]">&</span> RELAX</h1>
                             </div>
                         </div>
                     </header>
 
-                    {/* Contenido Principal con Padding para Bottom Navigation */}
+                    {/* Main Content */}
                     <main className="max-w-xl mx-auto px-5 mt-6 pb-32">
-                        {activeTab === 'calendario' ? (
+                        
+                        {/* ================= PESTAÑA CALENDARIO ================= */}
+                        {activeTab === 'calendario' && (
                             <div className="space-y-4 animate-in fade-in duration-500">
                                 <WeekSelector />
                                 <div className="flex items-center gap-2 mb-3 px-1 mt-6">
@@ -308,7 +415,7 @@
                                     const session = plan[`${currentWeek}-${day}`];
                                     const isRest = session?.type === 'descanso';
                                     return (
-                                        <div key={day} onClick={() => openEditor(currentWeek, day)} className={`group active:scale-[0.98] cursor-pointer p-4 rounded-2xl border transition-transform duration-200 ${session ? (isRest ? 'bg-[#18181B]/40 border-[#27272A]' : 'bg-[#06B6D4]/5 border-[#06B6D4]/40') : `${s.card} opacity-80 active:opacity-100`}`}>
+                                        <div key={day} onClick={() => openEditor(currentWeek, day)} className={`group active:scale-[0.98] cursor-pointer p-4 rounded-2xl border transition-transform duration-200 ${session ? (isRest ? 'bg-[#18181B]/40 border-[#27272A]' : 'bg-[#06B6D4]/5 border-[#06B6D4]/40') : 'bg-[#141417] border-[#27272A] opacity-80 active:opacity-100'}`}>
                                             <div className="flex justify-between items-center">
                                                 <div className="flex items-center gap-4">
                                                     <div className={`w-12 h-12 rounded-[14px] flex items-center justify-center ${session ? (isRest ? 'bg-[#27272A] text-[#71717A]' : 'bg-[#06B6D4] text-black shadow-md shadow-cyan-500/20') : 'bg-[#1F1F23] text-[#52525B]'}`}>
@@ -325,7 +432,10 @@
                                     );
                                 })}
                             </div>
-                        ) : activeTab === 'editor' ? (
+                        )}
+
+                        {/* ================= PESTAÑA EDITOR ================= */}
+                        {activeTab === 'editor' && (
                             <div className="space-y-6 animate-in slide-in-from-right-4 duration-300 pb-32">
                                 <div className="flex items-center justify-between mb-2">
                                     <button onClick={() => { setEditingDay(null); setActiveTab('calendario'); }} className="flex items-center gap-2 p-2 -ml-2 text-[#A1A1AA] text-[11px] font-black uppercase tracking-widest active:text-[#06B6D4] active:bg-[#18181B] rounded-lg transition-all"><ArrowLeft size={16}/> Volver</button>
@@ -466,14 +576,16 @@
                                     </div>
                                 )}
 
-                                {/* Editor Bottom Action Bar (Safe Area) */}
                                 <div className="fixed bottom-0 left-0 right-0 px-6 pt-6 pb-[max(2rem,env(safe-area-inset-bottom))] bg-gradient-to-t from-[#0A0A0C] via-[#0A0A0C]/95 to-transparent pointer-events-none z-50">
                                     <button onClick={saveAndReturn} className="max-w-xl mx-auto w-full bg-[#06B6D4] py-4.5 rounded-[18px] font-black text-[12px] uppercase tracking-[0.3em] text-black shadow-2xl shadow-cyan-500/30 pointer-events-auto flex items-center justify-center gap-3 active:bg-[#22D3EE] active:scale-[0.98] transition-all h-[60px]">
                                         <Save size={18}/> {sessionType === 'descanso' ? 'Confirmar Descanso' : 'Guardar Sesión'}
                                     </button>
                                 </div>
                             </div>
-                        ) : (
+                        )}
+
+                        {/* ================= PESTAÑA RESUMEN ================= */}
+                        {activeTab === 'resumen' && (
                             <div className="space-y-6 animate-in fade-in duration-500 pb-10">
                                 <WeekSelector />
                                 <div className="text-center pt-2 pb-4">
@@ -518,9 +630,7 @@
                                                                         <span className={theme.accent}>Rec: {block.subType === 'series' ? block.descanso : (block.subType === 'fartlek' ? 'N/A' : 'S/R')}</span>
                                                                     </div>
                                                                     <div className="flex justify-between items-center">
-                                                                        <span className="text-[#F4F4F5] font-black uppercase tracking-[0.15em] text-[11px]">
-                                                                            {block.subType}
-                                                                        </span>
+                                                                        <span className="text-[#F4F4F5] font-black uppercase tracking-[0.15em] text-[11px]">{block.subType}</span>
                                                                         <span className={`font-black uppercase tracking-tighter text-[15px] text-right ${theme.accent}`}>
                                                                             {block.subType === 'rodaje' ? `${block.distancia}km @ ${block.ritmo}` : 
                                                                              block.subType === 'series' ? `${block.reps}x${block.distancia}m @ ${block.vamPct}% VAM` : 
@@ -555,8 +665,7 @@
                                                     ))}
                                                 </div>
 
-                                                {/* NUEVO: Diario del Atleta (Anotaciones) */}
-                                                <div className={`mt-3 p-4 rounded-[18px] bg-[#141417] border border-[#27272A] relative group focus-within:border-[#06B6D4]/40 focus-within:bg-[#18181B] transition-all duration-300`}>
+                                                <div className="mt-3 p-4 rounded-[18px] bg-[#141417] border border-[#27272A] relative group focus-within:border-[#06B6D4]/40 focus-within:bg-[#18181B] transition-all duration-300">
                                                     <div className="flex items-center gap-2 mb-2">
                                                         <Pen size={12} className={theme.accent} />
                                                         <span className="text-[10px] font-black uppercase text-[#A1A1AA] tracking-widest">Diario del Atleta</span>
@@ -568,29 +677,308 @@
                                                         value={session.notasAlumno || ''}
                                                         onChange={(e) => updateStudentNotes(currentWeek, day, e.target.value)}
                                                     />
-                                                    <div className="absolute right-3 bottom-3 opacity-0 group-focus-within:opacity-100 transition-opacity duration-300 pointer-events-none">
-                                                        <CheckCircle2 size={16} className="text-emerald-500/80" />
-                                                    </div>
                                                 </div>
-
                                             </div>
                                         );
                                     })}
                                 </div>
                             </div>
                         )}
+
+                        {/* ================= PESTAÑA HERRAMIENTAS ================= */}
+                        {activeTab === 'herramientas' && (
+                            <div className="space-y-6 animate-in fade-in duration-500 pb-10">
+                                <div className="text-center pt-2 pb-4">
+                                    <h2 className="text-2xl font-black text-white uppercase tracking-tighter">Herramientas</h2>
+                                    <div className="h-1.5 w-12 bg-[#06B6D4] mx-auto mt-3 rounded-full shadow-lg shadow-cyan-500/20"></div>
+                                </div>
+
+                                {/* Selector de Herramienta */}
+                                <div className="flex bg-[#18181B] p-1.5 rounded-[18px] border border-[#27272A] mb-6 overflow-x-auto no-scrollbar">
+                                    <button onClick={() => setActiveTool('vam')} className={`flex-1 min-w-[70px] flex items-center justify-center gap-1.5 py-3.5 rounded-[14px] text-[10px] font-black uppercase transition-all active:scale-95 ${activeTool === 'vam' ? 'bg-[#06B6D4] text-black shadow-md' : 'text-[#71717A] hover:text-[#A1A1AA]'}`}>
+                                        <Calculator size={14} /> VAM
+                                    </button>
+                                    <button onClick={() => setActiveTool('dominadas')} className={`flex-1 min-w-[70px] flex items-center justify-center gap-1.5 py-3.5 rounded-[14px] text-[10px] font-black uppercase transition-all active:scale-95 ${activeTool === 'dominadas' ? 'bg-orange-500 text-black shadow-md' : 'text-[#71717A] hover:text-[#A1A1AA]'}`}>
+                                        <Dumbbell size={14} /> Dom.
+                                    </button>
+                                    <button onClick={() => setActiveTool('banca')} className={`flex-1 min-w-[70px] flex items-center justify-center gap-1.5 py-3.5 rounded-[14px] text-[10px] font-black uppercase transition-all active:scale-95 ${activeTool === 'banca' ? 'bg-indigo-500 text-white shadow-md' : 'text-[#71717A] hover:text-[#A1A1AA]'}`}>
+                                        <Weight size={14} /> Banca
+                                    </button>
+                                    <button onClick={() => setActiveTool('vbt')} className={`flex-1 min-w-[70px] flex items-center justify-center gap-1.5 py-3.5 rounded-[14px] text-[10px] font-black uppercase transition-all active:scale-95 ${activeTool === 'vbt' ? 'bg-purple-500 text-white shadow-md' : 'text-[#71717A] hover:text-[#A1A1AA]'}`}>
+                                        <VideoIcon size={14} /> VBT
+                                    </button>
+                                </div>
+                                
+                                {/* 1. HERRAMIENTA VAM */}
+                                {activeTool === 'vam' && (
+                                    <div className="animate-in slide-in-from-left-4 duration-300 space-y-6">
+                                        <div className="p-5 rounded-[24px] bg-[#141417] border border-[#27272A] space-y-5 shadow-sm">
+                                            <div className="flex items-center gap-3 border-b border-[#1F1F23] pb-4">
+                                                <div className="p-2.5 rounded-[12px] bg-cyan-500/10 text-cyan-400"><Calculator size={20}/></div>
+                                                <h3 className="text-[14px] font-black text-white uppercase tracking-tight">Calculadora VAM</h3>
+                                            </div>
+                                            <div className="space-y-4">
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-black uppercase text-[#71717A] tracking-widest pl-1">Distancia del Test (m)</label>
+                                                    <input type="number" inputMode="numeric" className="w-full bg-[#1F1F23] border border-[#27272A] rounded-[16px] p-4 text-lg font-black text-white focus:ring-1 focus:ring-cyan-500/50 outline-none transition-all" placeholder="Ej: 2000" value={vamDistance} onChange={e => setVamDistance(e.target.value)}/>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="space-y-2">
+                                                        <label className="text-[10px] font-black uppercase text-[#71717A] tracking-widest pl-1">Minutos</label>
+                                                        <input type="number" inputMode="numeric" className="w-full bg-[#1F1F23] border border-[#27272A] rounded-[16px] p-4 text-lg font-black text-white focus:ring-1 focus:ring-cyan-500/50 outline-none transition-all" placeholder="Ej: 7" value={vamMin} onChange={e => setVamMin(e.target.value)}/>
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <label className="text-[10px] font-black uppercase text-[#71717A] tracking-widest pl-1">Segundos</label>
+                                                        <input type="number" inputMode="numeric" className="w-full bg-[#1F1F23] border border-[#27272A] rounded-[16px] p-4 text-lg font-black text-white focus:ring-1 focus:ring-cyan-500/50 outline-none transition-all" placeholder="Ej: 30" value={vamSec} onChange={e => setVamSec(e.target.value)}/>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="pt-4 pb-2 text-center bg-[#0A0A0C]/50 rounded-[16px] p-4 border border-[#1F1F23]">
+                                                <div className="text-[10px] font-black uppercase text-[#71717A] tracking-widest mb-1">Tu VAM Estimada</div>
+                                                <div className="text-4xl font-black text-[#06B6D4] tracking-tighter">{currentVam.toFixed(1)} <span className="text-lg text-[#52525B] tracking-normal">km/h</span></div>
+                                            </div>
+                                        </div>
+
+                                        {currentVam > 0 && (
+                                            <div className="p-5 rounded-[24px] border bg-[#141417] border-[#27272A] space-y-5">
+                                                 <h3 className="text-[11px] font-black text-[#A1A1AA] uppercase tracking-widest text-center">Ritmos de Entrenamiento / 100m</h3>
+                                                 <div className="grid grid-cols-2 gap-3">
+                                                    {[80, 85, 90, 95, 100, 105, 110, 115, 120].map(pct => (
+                                                        <div key={pct} className={`flex justify-between items-center p-3.5 rounded-[14px] border transition-all ${pct === 100 ? 'border-cyan-500/40 bg-cyan-500/10 shadow-[0_0_15px_rgba(6,182,212,0.15)]' : 'border-[#27272A] bg-[#1F1F23]'}`}>
+                                                            <span className={`text-[11px] font-black ${pct === 100 ? 'text-cyan-400' : 'text-[#71717A]'}`}>{pct}% VAM</span>
+                                                            <span className={`text-[15px] font-black ${pct === 100 ? 'text-white' : 'text-[#F4F4F5]'}`}>{getPace100m(currentVam, pct)}</span>
+                                                        </div>
+                                                    ))}
+                                                 </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* 2. HERRAMIENTA DOMINADAS */}
+                                {activeTool === 'dominadas' && (
+                                    <div className="animate-in slide-in-from-right-4 duration-300">
+                                        <div className="p-5 rounded-[24px] bg-[#141417] border border-[#27272A] space-y-5 shadow-sm">
+                                            <div className="flex items-center gap-3 border-b border-[#1F1F23] pb-4">
+                                                <div className="p-2.5 rounded-[12px] bg-orange-500/10 text-orange-400"><Dumbbell size={20}/></div>
+                                                <h3 className="text-[14px] font-black text-white uppercase tracking-tight">Lastre Dominadas (Epley)</h3>
+                                            </div>
+                                            
+                                            <div className="space-y-4">
+                                                <h4 className="text-[10px] font-black text-[#06B6D4] uppercase tracking-widest">1. Datos del test (Tu Marca)</h4>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="space-y-2">
+                                                        <label className="text-[10px] font-black uppercase text-[#71717A] tracking-widest pl-1">Tu Peso (kg)</label>
+                                                        <input type="number" inputMode="decimal" className="w-full bg-[#1F1F23] border border-[#27272A] rounded-[16px] p-4 text-lg font-black text-white focus:ring-1 focus:ring-orange-500/50 outline-none transition-all" placeholder="Ej: 75" value={pullupBw} onChange={e => setPullupBw(e.target.value)}/>
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <label className="text-[10px] font-black uppercase text-[#71717A] tracking-widest pl-1">Lastre (kg)</label>
+                                                        <input type="number" inputMode="decimal" className="w-full bg-[#1F1F23] border border-[#27272A] rounded-[16px] p-4 text-lg font-black text-white focus:ring-1 focus:ring-orange-500/50 outline-none transition-all" placeholder="Ej: 20" value={pullupAw} onChange={e => setPullupAw(e.target.value)}/>
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-black uppercase text-[#71717A] tracking-widest pl-1">Repeticiones Completadas</label>
+                                                    <input type="number" inputMode="numeric" className="w-full bg-[#1F1F23] border border-[#27272A] rounded-[16px] p-4 text-lg font-black text-white focus:ring-1 focus:ring-orange-500/50 outline-none transition-all" placeholder="Ej: 5" value={pullupReps} onChange={e => setPullupReps(e.target.value)}/>
+                                                </div>
+                                            </div>
+
+                                            {total1Rm > 0 && (
+                                                <div className="grid grid-cols-2 gap-3 pt-2">
+                                                    <div className="text-center bg-[#0A0A0C]/50 rounded-[16px] p-3 border border-[#1F1F23]">
+                                                        <div className="text-[9px] font-black uppercase text-[#71717A] tracking-widest mb-1">1RM Total Estimado</div>
+                                                        <div className="text-xl font-black text-white">{total1Rm.toFixed(1)} <span className="text-xs text-[#52525B]">kg</span></div>
+                                                    </div>
+                                                    <div className="text-center bg-orange-500/10 rounded-[16px] p-3 border border-orange-500/20">
+                                                        <div className="text-[9px] font-black uppercase text-orange-500/70 tracking-widest mb-1">1RM Lastre Real</div>
+                                                        <div className="text-xl font-black text-orange-400">{lastre1Rm > 0 ? `+${lastre1Rm.toFixed(1)}` : '0'} <span className="text-xs text-orange-500/50">kg</span></div>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            <div className="border-t border-[#1F1F23] pt-5 space-y-4">
+                                                <h4 className="text-[10px] font-black text-[#06B6D4] uppercase tracking-widest">2. Planificar Serie</h4>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="space-y-2">
+                                                        <label className="text-[10px] font-black uppercase text-[#71717A] tracking-widest pl-1">Reps Objetivo</label>
+                                                        <input type="number" inputMode="numeric" className="w-full bg-[#1F1F23] border border-[#27272A] rounded-[16px] p-4 text-lg font-black text-white focus:ring-1 focus:ring-cyan-500/50 outline-none transition-all" placeholder="Ej: 8" value={targetReps} onChange={e => setTargetReps(e.target.value)}/>
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <label className="text-[10px] font-black uppercase text-[#71717A] tracking-widest pl-1">RPE Objetivo</label>
+                                                        <input type="number" inputMode="decimal" className="w-full bg-[#1F1F23] border border-[#27272A] rounded-[16px] p-4 text-lg font-black text-orange-400 focus:ring-1 focus:ring-orange-500/50 outline-none transition-all" placeholder="Ej: 8" value={targetRpe} onChange={e => setTargetRpe(e.target.value)}/>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {targetTotalWeight > 0 && (
+                                                <div className="pt-2 pb-1 text-center bg-[#0A0A0C]/80 rounded-[16px] p-5 border border-cyan-500/30 shadow-[0_0_20px_rgba(6,182,212,0.1)]">
+                                                    <div className="text-[10px] font-black uppercase text-cyan-500 tracking-widest mb-1">Lastre Recomendado para la Serie</div>
+                                                    <div className="text-3xl font-black text-white tracking-tighter mt-2">{formatLastre(recommendedLastre)}</div>
+                                                    <div className="text-[10px] font-bold text-[#71717A] uppercase mt-2">Peso Total a mover: {targetTotalWeight.toFixed(1)} kg</div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* 3. HERRAMIENTA BANCA */}
+                                {activeTool === 'banca' && (
+                                    <div className="animate-in slide-in-from-right-4 duration-300">
+                                        <div className="p-5 rounded-[24px] bg-[#141417] border border-[#27272A] space-y-5 shadow-sm">
+                                            <div className="flex items-center gap-3 border-b border-[#1F1F23] pb-4">
+                                                <div className="p-2.5 rounded-[12px] bg-indigo-500/10 text-indigo-400"><Weight size={20}/></div>
+                                                <h3 className="text-[14px] font-black text-white uppercase tracking-tight">Press Banca (Epley)</h3>
+                                            </div>
+                                            
+                                            <div className="space-y-4">
+                                                <h4 className="text-[10px] font-black text-[#06B6D4] uppercase tracking-widest">1. Datos del test (Tu Marca)</h4>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="space-y-2">
+                                                        <label className="text-[10px] font-black uppercase text-[#71717A] tracking-widest pl-1">Peso (kg)</label>
+                                                        <input type="number" inputMode="decimal" className="w-full bg-[#1F1F23] border border-[#27272A] rounded-[16px] p-4 text-lg font-black text-white focus:ring-1 focus:ring-indigo-500/50 outline-none transition-all" placeholder="Ej: 80" value={benchWeight} onChange={e => setBenchWeight(e.target.value)}/>
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <label className="text-[10px] font-black uppercase text-[#71717A] tracking-widest pl-1">Reps Completadas</label>
+                                                        <input type="number" inputMode="numeric" className="w-full bg-[#1F1F23] border border-[#27272A] rounded-[16px] p-4 text-lg font-black text-white focus:ring-1 focus:ring-indigo-500/50 outline-none transition-all" placeholder="Ej: 5" value={benchReps} onChange={e => setBenchReps(e.target.value)}/>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {bench1Rm > 0 && (
+                                                <div className="pt-2">
+                                                    <div className="text-center bg-[#0A0A0C]/50 rounded-[16px] p-3 border border-[#1F1F23]">
+                                                        <div className="text-[9px] font-black uppercase text-[#71717A] tracking-widest mb-1">1RM Estimado</div>
+                                                        <div className="text-xl font-black text-white">{bench1Rm.toFixed(1)} <span className="text-xs text-[#52525B]">kg</span></div>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            <div className="border-t border-[#1F1F23] pt-5 space-y-4">
+                                                <h4 className="text-[10px] font-black text-[#06B6D4] uppercase tracking-widest">2. Planificar Serie</h4>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="space-y-2">
+                                                        <label className="text-[10px] font-black uppercase text-[#71717A] tracking-widest pl-1">Reps Objetivo</label>
+                                                        <input type="number" inputMode="numeric" className="w-full bg-[#1F1F23] border border-[#27272A] rounded-[16px] p-4 text-lg font-black text-white focus:ring-1 focus:ring-cyan-500/50 outline-none transition-all" placeholder="Ej: 8" value={benchTargetReps} onChange={e => setBenchTargetReps(e.target.value)}/>
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <label className="text-[10px] font-black uppercase text-[#71717A] tracking-widest pl-1">RPE Objetivo</label>
+                                                        <input type="number" inputMode="decimal" className="w-full bg-[#1F1F23] border border-[#27272A] rounded-[16px] p-4 text-lg font-black text-indigo-400 focus:ring-1 focus:ring-indigo-500/50 outline-none transition-all" placeholder="Ej: 8" value={benchTargetRpe} onChange={e => setBenchTargetRpe(e.target.value)}/>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {recommendedBenchWeight > 0 && (
+                                                <div className="pt-2 pb-1 text-center bg-[#0A0A0C]/80 rounded-[16px] p-5 border border-cyan-500/30 shadow-[0_0_20px_rgba(6,182,212,0.1)]">
+                                                    <div className="text-[10px] font-black uppercase text-cyan-500 tracking-widest mb-1">Peso Recomendado</div>
+                                                    <div className="text-3xl font-black text-white tracking-tighter mt-2">{recommendedBenchWeight.toFixed(1)} kg</div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* 4. HERRAMIENTA VBT */}
+                                {activeTool === 'vbt' && (
+                                    <div className="animate-in slide-in-from-right-4 duration-300">
+                                        <div className="p-5 rounded-[24px] bg-[#141417] border border-[#27272A] space-y-5 shadow-sm">
+                                            <div className="flex items-center gap-3 border-b border-[#1F1F23] pb-4">
+                                                <div className="p-2.5 rounded-[12px] bg-purple-500/10 text-purple-400"><VideoIcon size={20}/></div>
+                                                <h3 className="text-[14px] font-black text-white uppercase tracking-tight">VBT - Análisis de Video</h3>
+                                            </div>
+                                            
+                                            <div className="space-y-4">
+                                                <h4 className="text-[10px] font-black text-[#06B6D4] uppercase tracking-widest">1. Configuración</h4>
+                                                <div className="grid grid-cols-1 gap-4">
+                                                    <div className="space-y-2">
+                                                        <label className="text-[10px] font-black uppercase text-[#71717A] tracking-widest pl-1">Ejercicio</label>
+                                                        <select className="w-full bg-[#1F1F23] border border-[#27272A] rounded-[16px] p-4 text-sm font-black text-white focus:ring-1 focus:ring-purple-500/50 outline-none transition-all appearance-none" value={vbtExercise} onChange={e => setVbtExercise(e.target.value)}>
+                                                            <option value="sentadilla">Sentadilla</option>
+                                                            <option value="banca">Press Banca</option>
+                                                            <option value="muerto">Peso Muerto</option>
+                                                            <option value="dominadas">Dominadas</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="space-y-2">
+                                                        <label className="text-[10px] font-black uppercase text-[#71717A] tracking-widest pl-1">Peso (kg)</label>
+                                                        <input type="number" inputMode="decimal" className="w-full bg-[#1F1F23] border border-[#27272A] rounded-[16px] p-4 text-lg font-black text-white focus:ring-1 focus:ring-purple-500/50 outline-none transition-all" placeholder="Ej: 100" value={vbtWeight} onChange={e => setVbtWeight(e.target.value)}/>
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <label className="text-[10px] font-black uppercase text-[#71717A] tracking-widest pl-1">ROM (cm)</label>
+                                                        <input type="number" inputMode="decimal" className="w-full bg-[#1F1F23] border border-[#27272A] rounded-[16px] p-4 text-lg font-black text-white focus:ring-1 focus:ring-purple-500/50 outline-none transition-all" placeholder="Ej: 60" value={vbtRom} onChange={e => setVbtRom(e.target.value)}/>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="border-t border-[#1F1F23] pt-5 space-y-4">
+                                                <h4 className="text-[10px] font-black text-[#06B6D4] uppercase tracking-widest">2. Subir Video y Marcar</h4>
+                                                
+                                                <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-[#27272A] rounded-[16px] cursor-pointer hover:bg-[#1F1F23] transition-all">
+                                                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                                        <VideoIcon size={24} className="text-[#52525B] mb-2"/>
+                                                        <p className="text-[10px] font-bold text-[#71717A] uppercase tracking-widest">Seleccionar Video</p>
+                                                    </div>
+                                                    <input type="file" accept="video/*" className="hidden" onChange={handleVideoUpload} />
+                                                </label>
+
+                                                {vbtVideoUrl && (
+                                                    <div className="space-y-3 mt-4">
+                                                        <video ref={videoRef} src={vbtVideoUrl} controls className="w-full rounded-[12px] border border-[#27272A] bg-black max-h-[400px]" playsInline></video>
+                                                        
+                                                        <div className="grid grid-cols-2 gap-3">
+                                                            <button onClick={() => markTime('start')} className="py-3 bg-[#1F1F23] active:bg-[#27272A] border border-[#27272A] rounded-[12px] text-[10px] font-black uppercase text-white transition-all">
+                                                                Marcar Inicio
+                                                                {vbtStartTime !== null && <span className="block text-purple-400 text-xs mt-1">{vbtStartTime.toFixed(2)}s</span>}
+                                                            </button>
+                                                            <button onClick={() => markTime('end')} className="py-3 bg-[#1F1F23] active:bg-[#27272A] border border-[#27272A] rounded-[12px] text-[10px] font-black uppercase text-white transition-all">
+                                                                Marcar Fin
+                                                                {vbtEndTime !== null && <span className="block text-purple-400 text-xs mt-1">{vbtEndTime.toFixed(2)}s</span>}
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {(vbtVelocity > 0) && (
+                                                <div className="pt-4 border-t border-[#1F1F23]">
+                                                    <div className="grid grid-cols-2 gap-3 mb-4">
+                                                        <div className="text-center bg-[#0A0A0C]/50 rounded-[16px] p-3 border border-[#1F1F23]">
+                                                            <div className="text-[9px] font-black uppercase text-[#71717A] tracking-widest mb-1">Tiempo Conc.</div>
+                                                            <div className="text-xl font-black text-white">{vbtTime.toFixed(2)} <span className="text-xs text-[#52525B]">s</span></div>
+                                                        </div>
+                                                        <div className="text-center bg-purple-500/10 rounded-[16px] p-3 border border-purple-500/20">
+                                                            <div className="text-[9px] font-black uppercase text-purple-400/80 tracking-widest mb-1">Velocidad Media</div>
+                                                            <div className="text-xl font-black text-purple-400">{vbtVelocity.toFixed(2)} <span className="text-xs text-purple-500/50">m/s</span></div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="text-center bg-[#0A0A0C]/80 rounded-[16px] p-5 border border-cyan-500/30 shadow-[0_0_20px_rgba(6,182,212,0.1)]">
+                                                        <div className="text-[10px] font-black uppercase text-cyan-500 tracking-widest mb-1">1RM Estimado (Genérico)</div>
+                                                        <div className="text-3xl font-black text-white tracking-tighter mt-2">{currentVbt1Rm.toFixed(1)} <span className="text-lg text-[#52525B]">kg</span></div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </main>
 
-                    {/* Tab Bar Nativo Inferior para Móviles */}
+                    {/* Tab Bar Inferior */}
                     {activeTab !== 'editor' && (
-                        <nav className="fixed bottom-0 w-full bg-[#141417]/95 backdrop-blur-xl border-t border-[#27272A] pb-[max(0.8rem,env(safe-area-inset-bottom))] pt-2.5 px-6 z-50 flex justify-around shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
-                            <button onClick={() => setActiveTab('calendario')} className={`flex flex-col items-center gap-1.5 transition-all p-2 w-20 active:scale-95 ${activeTab === 'calendario' ? 'text-[#06B6D4]' : 'text-[#71717A]'}`}>
+                        <nav className="fixed bottom-0 w-full bg-[#141417]/95 backdrop-blur-xl border-t border-[#27272A] pb-[max(0.8rem,env(safe-area-inset-bottom))] pt-2.5 px-4 z-50 flex justify-around shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+                            <button onClick={() => setActiveTab('calendario')} className={`flex flex-col items-center gap-1.5 transition-all p-2 w-[72px] active:scale-95 ${activeTab === 'calendario' ? 'text-[#06B6D4]' : 'text-[#71717A]'}`}>
                                 <Calendar size={20} />
                                 <span className="text-[9px] font-black uppercase tracking-widest">Plan</span>
                             </button>
-                            <button onClick={() => setActiveTab('resumen')} className={`flex flex-col items-center gap-1.5 transition-all p-2 w-20 active:scale-95 ${activeTab === 'resumen' ? 'text-[#06B6D4]' : 'text-[#71717A]'}`}>
+                            <button onClick={() => setActiveTab('resumen')} className={`flex flex-col items-center gap-1.5 transition-all p-2 w-[72px] active:scale-95 ${activeTab === 'resumen' ? 'text-[#06B6D4]' : 'text-[#71717A]'}`}>
                                 <FileText size={20} />
                                 <span className="text-[9px] font-black uppercase tracking-widest">Resumen</span>
+                            </button>
+                            <button onClick={() => setActiveTab('herramientas')} className={`flex flex-col items-center gap-1.5 transition-all p-2 w-[72px] active:scale-95 ${activeTab === 'herramientas' ? 'text-[#06B6D4]' : 'text-[#71717A]'}`}>
+                                <Calculator size={20} />
+                                <span className="text-[9px] font-black uppercase tracking-widest">Herram.</span>
                             </button>
                         </nav>
                     )}
