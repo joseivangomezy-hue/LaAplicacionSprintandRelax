@@ -292,14 +292,14 @@
                 return (d / totalSeconds) * 3.6;
             };
             const getPace100m = (vamKmh, percent) => {
-                if (vamKmh === 0) return "0:00";
+                if (vamKmh === 0) return "0:00.0";
                 const targetVamKmh = vamKmh * (percent / 100);
                 const targetMs = targetVamKmh / 3.6;
-                if (targetMs === 0) return "0:00";
+                if (targetMs === 0) return "0:00.0";
                 const sec100m = 100 / targetMs;
                 const mins = Math.floor(sec100m / 60);
-                const secs = Math.floor(sec100m % 60);
-                return `${mins}:${secs.toString().padStart(2, '0')}`;
+                const secs = (sec100m % 60).toFixed(1);
+                return `${mins}:${secs.padStart(4, '0')}`;
             };
             const currentVam = calculateVAM();
 
