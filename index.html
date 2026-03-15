@@ -209,6 +209,11 @@
             const [vamMin, setVamMin] = useState('7');
             const [vamSec, setVamSec] = useState('30');
 
+            // Estado Natación
+            const [swimDistance, setSwimDistance] = useState('400');
+            const [swimMin, setSwimMin] = useState('6');
+            const [swimSec, setSwimSec] = useState('00');
+
             // Estado Dominadas
             const [pullupBw, setPullupBw] = useState('75');
             const [pullupAw, setPullupAw] = useState('20');
@@ -282,6 +287,35 @@
             useEffect(() => {
                 localStorage.setItem('sprintRelaxCustomTests', JSON.stringify(customTests));
             }, [customTests]);
+
+            // --- Cálculos Natación ---
+            const calculateSwimPace = () => {
+                const d = parseFloat(swimDistance) || 0;
+                const m = parseInt(swimMin) || 0;
+                const s = parseInt(swimSec) || 0;
+                const totalSeconds = (m * 60) + s;
+                if (d === 0 || totalSeconds === 0) return 0;
+                return (totalSeconds / d) * 100; // Segundos por cada 100m
+            };
+            const currentSwimPace = calculateSwimPace();
+
+            const getSwimPace100m = (basePaceSec, percent) => {
+                if (basePaceSec === 0) return "0:00";
+                const targetSec = basePaceSec / (percent / 100);
+                const mins = Math.floor(targetSec / 60);
+                const secs = (targetSec % 60).toFixed(0);
+                return `${mins}:${secs.padStart(2, '0')}`;
+            };
+
+            const getSwimPace25m = (basePaceSec, percent) => {
+                if (basePaceSec === 0) return "0:00.0";
+                const targetSec100 = basePaceSec / (percent / 100);
+                const targetSec25 = targetSec100 / 4;
+                const mins = Math.floor(targetSec25 / 60);
+                const secs = (targetSec25 % 60).toFixed(1);
+                if (mins > 0) return `${mins}:${secs.padStart(4, '0')}`;
+                return `${secs}s`;
+            };
 
             // --- Cálculos Básicos de Rendimiento (VAM & Dominadas) ---
             const calculateVAM = () => {
@@ -1078,6 +1112,9 @@
                                     <button onClick={() => setActiveTool('vam')} className={`flex-1 min-w-[70px] flex items-center justify-center gap-1.5 py-3.5 rounded-[14px] text-[10px] font-black uppercase transition-all active:scale-95 ${activeTool === 'vam' ? 'bg-yellow-500 text-black shadow-md' : 'text-[#71717A] hover:text-[#A1A1AA]'}`}>
                                         <Calculator size={14} /> VAM
                                     </button>
+                                    <button onClick={() => setActiveTool('natacion')} className={`flex-1 min-w-[70px] flex items-center justify-center gap-1.5 py-3.5 rounded-[14px] text-[10px] font-black uppercase transition-all active:scale-95 ${activeTool === 'natacion' ? 'bg-blue-500 text-white shadow-md' : 'text-[#71717A] hover:text-[#A1A1AA]'}`}>
+                                        <Waves size={14} /> Nado
+                                    </button>
                                     <button onClick={() => setActiveTool('dominadas')} className={`flex-1 min-w-[70px] flex items-center justify-center gap-1.5 py-3.5 rounded-[14px] text-[10px] font-black uppercase transition-all active:scale-95 ${activeTool === 'dominadas' ? 'bg-orange-500 text-black shadow-md' : 'text-[#71717A] hover:text-[#A1A1AA]'}`}>
                                         <Dumbbell size={14} /> Dom.
                                     </button>
@@ -1124,6 +1161,56 @@
                                                         <div key={pct} className={`flex justify-between items-center p-3.5 rounded-[14px] border transition-all ${pct === 100 ? 'border-yellow-500/40 bg-yellow-500/10 shadow-[0_0_15px_rgba(234,179,8,0.15)]' : 'border-[#27272A] bg-[#1F1F23]'}`}>
                                                             <span className={`text-[11px] font-black ${pct === 100 ? 'text-yellow-400' : 'text-[#71717A]'}`}>{pct}% VAM</span>
                                                             <span className={`text-[15px] font-black ${pct === 100 ? 'text-white' : 'text-[#F4F4F5]'}`}>{getPace100m(currentVam, pct)}</span>
+                                                        </div>
+                                                    ))}
+                                                 </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* 1.5. HERRAMIENTA NATACIÓN */}
+                                {activeTool === 'natacion' && (
+                                    <div className="animate-in slide-in-from-left-4 duration-300 space-y-6">
+                                        <div className="p-5 rounded-[24px] bg-[#141417] border border-[#27272A] space-y-5 shadow-sm">
+                                            <div className="flex items-center gap-3 border-b border-[#1F1F23] pb-4">
+                                                <div className="p-2.5 rounded-[12px] bg-blue-500/10 text-blue-400"><Waves size={20}/></div>
+                                                <h3 className="text-[14px] font-black text-white uppercase tracking-tight">Ritmos de Natación</h3>
+                                            </div>
+                                            <div className="space-y-4">
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-black uppercase text-[#71717A] tracking-widest pl-1">Distancia del Test (m)</label>
+                                                    <input type="number" inputMode="numeric" className="w-full bg-[#1F1F23] border border-[#27272A] rounded-[16px] p-4 text-lg font-black text-white focus:ring-1 focus:ring-blue-500/50 outline-none transition-all" placeholder="Ej: 400" value={swimDistance} onChange={e => setSwimDistance(e.target.value)}/>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="space-y-2">
+                                                        <label className="text-[10px] font-black uppercase text-[#71717A] tracking-widest pl-1">Minutos</label>
+                                                        <input type="number" inputMode="numeric" className="w-full bg-[#1F1F23] border border-[#27272A] rounded-[16px] p-4 text-lg font-black text-white focus:ring-1 focus:ring-blue-500/50 outline-none transition-all" placeholder="Ej: 6" value={swimMin} onChange={e => setSwimMin(e.target.value)}/>
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <label className="text-[10px] font-black uppercase text-[#71717A] tracking-widest pl-1">Segundos</label>
+                                                        <input type="number" inputMode="numeric" className="w-full bg-[#1F1F23] border border-[#27272A] rounded-[16px] p-4 text-lg font-black text-white focus:ring-1 focus:ring-blue-500/50 outline-none transition-all" placeholder="Ej: 00" value={swimSec} onChange={e => setSwimSec(e.target.value)}/>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="pt-4 pb-2 text-center bg-[#0A0A0C]/50 rounded-[16px] p-4 border border-[#1F1F23]">
+                                                <div className="text-[10px] font-black uppercase text-[#71717A] tracking-widest mb-1">Ritmo Base (100%)</div>
+                                                <div className="text-4xl font-black text-blue-500 tracking-tighter">{Math.floor(currentSwimPace / 60)}:{(currentSwimPace % 60).toFixed(0).padStart(2, '0')} <span className="text-lg text-[#52525B] tracking-normal">/ 100m</span></div>
+                                                <div className="text-[14px] font-bold text-[#A1A1AA] mt-1.5 uppercase tracking-widest">{getSwimPace25m(currentSwimPace, 100)} / 25m</div>
+                                            </div>
+                                        </div>
+
+                                        {currentSwimPace > 0 && (
+                                            <div className="p-5 rounded-[24px] border bg-[#141417] border-[#27272A] space-y-5">
+                                                 <h3 className="text-[11px] font-black text-[#A1A1AA] uppercase tracking-widest text-center">Zonas de Ritmo / 100m</h3>
+                                                 <div className="grid grid-cols-2 gap-3">
+                                                    {[80, 85, 90, 95, 100, 105, 110, 115].map(pct => (
+                                                        <div key={pct} className={`flex justify-between items-center p-3.5 rounded-[14px] border transition-all ${pct === 100 ? 'border-blue-500/40 bg-blue-500/10 shadow-[0_0_15px_rgba(59,130,246,0.15)]' : 'border-[#27272A] bg-[#1F1F23]'}`}>
+                                                            <span className={`text-[11px] font-black ${pct === 100 ? 'text-blue-400' : 'text-[#71717A]'}`}>{pct}% Vel.</span>
+                                                            <div className="text-right">
+                                                                <div className={`text-[15px] font-black ${pct === 100 ? 'text-white' : 'text-[#F4F4F5]'}`}>{getSwimPace100m(currentSwimPace, pct)}</div>
+                                                                <div className={`text-[12px] font-bold mt-0.5 ${pct === 100 ? 'text-blue-400' : 'text-[#71717A]'}`}>{getSwimPace25m(currentSwimPace, pct)}</div>
+                                                            </div>
                                                         </div>
                                                     ))}
                                                  </div>
