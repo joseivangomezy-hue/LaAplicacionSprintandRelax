@@ -258,6 +258,7 @@
             const [hiddenTests, setHiddenTests] = useState(new Set());
 
             const [profileDate, setProfileDate] = useState(new Date());
+            const [selectedHistorySession, setSelectedHistorySession] = useState(null);
 
             const [activeVideo, setActiveVideo] = useState(null);
             const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
@@ -1613,7 +1614,19 @@
                                             }
 
                                             return (
-                                                <div key={d} className={`aspect-square flex flex-col items-center justify-center rounded-[12px] relative border transition-all ${isToday ? 'border-[#F97316] bg-[#F97316]/10' : 'border-[#27272A] bg-[#1F1F23]'}`}>
+                                                <div 
+                                                    key={d} 
+                                                    onClick={() => {
+                                                        if(session) {
+                                                            setSelectedHistorySession({
+                                                                dayNum: d,
+                                                                monthName: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'][profileDate.getMonth()],
+                                                                session: session
+                                                            });
+                                                        }
+                                                    }}
+                                                    className={`aspect-square flex flex-col items-center justify-center rounded-[12px] relative border transition-all ${isToday ? 'border-[#F97316] bg-[#F97316]/10' : 'border-[#27272A] bg-[#1F1F23]'} ${session ? 'cursor-pointer active:scale-95 hover:border-[#52525B]' : ''}`}
+                                                >
                                                     <span className={`text-[11px] font-bold ${isToday ? 'text-[#F97316]' : 'text-white'}`}>{d}</span>
                                                     {session && <div className={`w-1.5 h-1.5 rounded-full mt-0.5 ${indicatorClass}`} />}
                                                 </div>
@@ -1639,6 +1652,77 @@
                             </div>
                         )}
                     </main>
+
+                    {/* Modal del Historial de Entrenamiento */}
+                    {selectedHistorySession && (
+                        <div className="fixed inset-0 z-[110] bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-4 animate-in fade-in duration-300" onClick={() => setSelectedHistorySession(null)}>
+                            <div className="bg-[#141417] border border-[#27272A] rounded-[24px] w-full max-w-sm max-h-[80vh] overflow-y-auto shadow-2xl flex flex-col no-scrollbar" onClick={e => e.stopPropagation()}>
+                                <div className="sticky top-0 bg-[#141417]/95 backdrop-blur-md border-b border-[#27272A] p-5 flex justify-between items-center z-10 rounded-t-[24px]">
+                                    <div>
+                                        <span className="text-[10px] font-black uppercase text-[#F97316] tracking-widest">{selectedHistorySession.dayNum} {selectedHistorySession.monthName}</span>
+                                        <h3 className="text-[16px] font-black text-white leading-tight uppercase tracking-tight mt-0.5">{selectedHistorySession.session.name}</h3>
+                                    </div>
+                                    <button onClick={() => setSelectedHistorySession(null)} className="w-8 h-8 flex-shrink-0 bg-[#1F1F23] rounded-full flex items-center justify-center text-[#A1A1AA] hover:text-white active:scale-90 transition-all border border-[#27272A]">
+                                        <X size={16} />
+                                    </button>
+                                </div>
+                                <div className="p-5 space-y-3">
+                                    {selectedHistorySession.session.type === 'descanso' ? (
+                                        <div className="text-center py-8 opacity-60">
+                                            <Moon size={32} className="mx-auto mb-3 text-[#52525B]" />
+                                            <p className="text-[11px] font-black uppercase tracking-widest text-[#71717A]">Día de Descanso</p>
+                                        </div>
+                                    ) : (
+                                        selectedHistorySession.session.data.map((block, bIdx) => (
+                                            <div key={bIdx} className="p-4 rounded-[16px] bg-[#1F1F23] border border-[#27272A] space-y-3">
+                                                <div className="flex justify-between items-center text-[9px] font-black uppercase text-[#71717A] tracking-widest border-b border-[#27272A] pb-2">
+                                                    <span>BLOQUE {bIdx+1}</span>
+                                                    {(selectedHistorySession.session.type === 'fuerza' || selectedHistorySession.session.type === 'natacion' || selectedHistorySession.session.type === 'cuerda') && (
+                                                        <span className="text-[#F97316]">Rec: {block.descansoSerie}</span>
+                                                    )}
+                                                </div>
+                                                
+                                                {selectedHistorySession.session.type === 'carrera' && (
+                                                    <div className="flex justify-between items-center gap-2">
+                                                        <span className="text-white font-black uppercase tracking-tight text-[11px]">{block.subType}</span>
+                                                        <span className="font-black text-[#F97316] text-[12px] text-right">
+                                                            {block.subType === 'rodaje' ? `${block.distancia}km @ ${block.ritmo}` : 
+                                                             block.subType === 'series' ? `${block.reps}x${block.distancia}m @ ${block.vamPct}% VAM` : 
+                                                             `${block.reps} reps (${block.tiempoFuerte}/${block.tiempoSuave})`}
+                                                        </span>
+                                                    </div>
+                                                )}
+
+                                                {(['fuerza', 'natacion', 'cuerda'].includes(selectedHistorySession.session.type)) && block.items && (
+                                                    <div className="space-y-2.5">
+                                                        {block.items.map((item, eIdx) => (
+                                                            <div key={eIdx} className="flex justify-between items-start gap-3">
+                                                                <span className="text-white font-bold uppercase text-[11px] flex-1 leading-tight">{item.nombre || 'Ejercicio'}</span>
+                                                                <span className="font-black text-[#F97316] text-[11px] whitespace-nowrap">
+                                                                    {item.series}x{item.reps} {item.ritmo ? <span className="text-[#71717A] ml-1">@{item.ritmo}</span> : (item.rpe ? <span className="text-orange-500 ml-1">RPE {item.rpe}</span> : '')}
+                                                                </span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                                {block.notas && <p className="text-[10px] text-[#A1A1AA] italic border-l-[2px] border-[#27272A] pl-2 mt-2 leading-relaxed">"{block.notas}"</p>}
+                                            </div>
+                                        ))
+                                    )}
+
+                                    {selectedHistorySession.session.notasAlumno && (
+                                        <div className="mt-4 p-4 rounded-[16px] bg-[#0A0A0C] border border-[#27272A]">
+                                            <div className="flex items-center gap-1.5 mb-2">
+                                                <Pen size={12} className="text-[#F97316]" />
+                                                <span className="text-[9px] font-black uppercase text-[#A1A1AA] tracking-widest">Diario del Atleta</span>
+                                            </div>
+                                            <p className="text-[12px] text-white leading-relaxed">"{selectedHistorySession.session.notasAlumno}"</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Reproductor de Video (Modal Nativo) */}
                     {activeVideo && (
