@@ -49,6 +49,66 @@
         
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* ========================================================
+           MODO CLARO (LIGHT MODE) OVERRIDES
+           Sobrescribe los colores HEX de Tailwind automáticamente
+        ======================================================== */
+        html.light-mode { color-scheme: light; background-color: #F3F4F6 !important; }
+        html.light-mode body { background-color: #F3F4F6 !important; color: #374151 !important; }
+        
+        .light-mode .bg-\[\#0A0A0C\] { background-color: #F3F4F6 !important; }
+        .light-mode .bg-\[\#141417\] { background-color: #FFFFFF !important; }
+        .light-mode .bg-\[\#18181B\] { background-color: #F9FAFB !important; }
+        .light-mode .bg-\[\#1F1F23\] { background-color: #FFFFFF !important; }
+        
+        .light-mode .bg-\[\#0A0A0C\]\/30 { background-color: rgba(243,244,246,0.3) !important; }
+        .light-mode .bg-\[\#0A0A0C\]\/50 { background-color: rgba(243,244,246,0.5) !important; }
+        .light-mode .bg-\[\#0A0A0C\]\/60 { background-color: rgba(243,244,246,0.6) !important; }
+        .light-mode .bg-\[\#0A0A0C\]\/80 { background-color: rgba(243,244,246,0.8) !important; }
+        .light-mode .bg-\[\#0A0A0C\]\/90 { background-color: rgba(243,244,246,0.9) !important; }
+        .light-mode .bg-\[\#0A0A0C\]\/95 { background-color: rgba(243,244,246,0.95) !important; }
+        
+        .light-mode .bg-\[\#141417\]\/95 { background-color: rgba(255,255,255,0.95) !important; }
+        .light-mode .bg-\[\#18181B\]\/40 { background-color: rgba(249,250,251,0.4) !important; }
+        .light-mode .bg-\[\#1F1F23\]\/80 { background-color: rgba(255,255,255,0.8) !important; }
+
+        .light-mode .border-\[\#27272A\] { border-color: #E5E7EB !important; }
+        .light-mode .border-\[\#27272A\]\/50 { border-color: rgba(229,231,235,0.5) !important; }
+        .light-mode .border-\[\#1F1F23\] { border-color: #D1D5DB !important; }
+        .light-mode .border-white\/5 { border-color: rgba(0,0,0,0.05) !important; }
+        .light-mode .border-white\/10 { border-color: rgba(0,0,0,0.1) !important; }
+
+        .light-mode .text-\[\#F4F4F5\] { color: #111827 !important; }
+        .light-mode .text-\[\#A1A1AA\] { color: #374151 !important; }
+        .light-mode .text-\[\#71717A\] { color: #6B7280 !important; }
+        .light-mode .text-\[\#52525B\] { color: #9CA3AF !important; }
+        .light-mode .text-\[\#3F3F46\] { color: #9CA3AF !important; }
+        .light-mode .text-\[\#D4D4D8\] { color: #374151 !important; }
+        
+        .light-mode input.text-white, 
+        .light-mode textarea.text-white, 
+        .light-mode select.text-white { color: #111827 !important; }
+        
+        .light-mode h2.text-white,
+        .light-mode h3.text-white,
+        .light-mode span.text-white:not(.bg-red-500):not(.bg-blue-500):not(.bg-yellow-500):not(.bg-orange-500):not(.bg-emerald-500),
+        .light-mode div.text-white:not(.bg-red-500):not(.bg-blue-500):not(.bg-yellow-500):not(.bg-orange-500):not(.bg-emerald-500),
+        .light-mode button.text-white:not(.bg-red-500):not(.bg-blue-500):not(.bg-yellow-500):not(.bg-orange-500):not(.bg-emerald-500) { 
+            color: #111827 !important; 
+        }
+
+        .light-mode button.bg-\[\#1F1F23\] { color: #374151 !important; }
+        .light-mode button.bg-\[\#1F1F23\]:hover { color: #111827 !important; }
+        
+        .light-mode svg text[fill="#D4D4D8"] { fill: #374151 !important; text-shadow: 0px 1px 2px rgba(255,255,255,0.8) !important; }
+        .light-mode svg circle[fill="#0A0A0C"] { fill: #F3F4F6 !important; }
+
+        .light-mode .from-\[\#0A0A0C\] { --tw-gradient-from: #F3F4F6 var(--tw-gradient-from-position) !important; }
+        .light-mode .via-\[\#0A0A0C\]\/95 { --tw-gradient-via: rgba(243,244,246,0.95) var(--tw-gradient-via-position) !important; }
+        
+        .light-mode .placeholder-\[\#3F3F46\]::placeholder { color: #9CA3AF !important; }
+        .light-mode .placeholder-\[\#52525B\]::placeholder { color: #9CA3AF !important; }
     </style>
 </head>
 <body>
@@ -154,7 +214,12 @@
                                 <g key={test.id}>
                                     <path d={pathD} fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="drop-shadow-sm opacity-90" />
                                     {points.map((p, i) => (
-                                        <circle key={i} cx={p.x} cy={p.y} r="4" fill="#0A0A0C" stroke={color} strokeWidth="2.5" />
+                                        <g key={i}>
+                                            <circle cx={p.x} cy={p.y} r="4" fill="#0A0A0C" stroke={color} strokeWidth="2.5" />
+                                            <text x={p.x} y={p.y - 8} fill="#D4D4D8" fontSize="8" fontWeight="bold" textAnchor="middle" style={{ textShadow: "0px 1px 2px rgba(0,0,0,0.8)" }}>
+                                                {p.val}
+                                            </text>
+                                        </g>
                                     ))}
                                 </g>
                             );
@@ -184,7 +249,21 @@
             const [showInstallBanner, setShowInstallBanner] = useState(false);
             const [showExitConfirm, setShowExitConfirm] = useState(false);
             
-            const [selectedYear, setSelectedYear] = useState(Math.max(2026, new Date().getFullYear()));
+            const [isDarkMode, setIsDarkMode] = useState(() => {
+                const saved = localStorage.getItem('sprintRelaxTheme');
+                return saved ? saved === 'dark' : false; // Por defecto modo claro (false)
+            });
+
+            useEffect(() => {
+                localStorage.setItem('sprintRelaxTheme', isDarkMode ? 'dark' : 'light');
+                if (isDarkMode) {
+                    document.documentElement.classList.remove('light-mode');
+                } else {
+                    document.documentElement.classList.add('light-mode');
+                }
+            }, [isDarkMode]);
+            
+            const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
             const [currentMesocycle, setCurrentMesocycle] = useState(1);
             const [currentWeek, setCurrentWeek] = useState(1);
             
@@ -347,12 +426,15 @@
             const tReps = parseInt(targetReps) || 0;
             const tRpe = parseFloat(targetRpe) || 0;
             const totalWeight = bw + aw;
-            const total1Rm = reps > 0 ? totalWeight * (1 + reps / 30) : 0;
+            
+            // Fórmula Epley Modificada: (reps - 1) para que 1 rep = 100% exacto del RM
+            const total1Rm = reps > 0 ? totalWeight * (1 + (reps - 1) / 30) : 0;
             const lastre1Rm = total1Rm - bw;
             const rir = Math.max(0, 10 - tRpe);
             const theoreticalReps = tReps + rir;
-            const targetTotalWeight = theoreticalReps > 0 && total1Rm > 0 ? total1Rm / (1 + theoreticalReps / 30) : 0;
+            const targetTotalWeight = theoreticalReps > 0 && total1Rm > 0 ? total1Rm / (1 + (theoreticalReps - 1) / 30) : 0;
             const recommendedLastre = targetTotalWeight > 0 ? targetTotalWeight - bw : 0;
+            
             const formatLastre = (weight) => {
                 if (weight > 0) return `+${weight.toFixed(1)} kg`;
                 if (weight < 0) return `-${Math.abs(weight).toFixed(1)} kg (Gomas/Asistidas)`;
@@ -451,6 +533,20 @@
                     data: data,
                     notasAlumno: existingNotes 
                 };
+
+                setPlan(newPlan);
+                setEditingDay(null);
+                setActiveTab('calendario');
+            };
+
+            const deleteSession = () => {
+                if (!editingDay) return;
+                const key = `${editingDay.year}-${editingDay.week}-${editingDay.day}`;
+                const fallbackKey = `${editingDay.week}-${editingDay.day}`;
+                
+                const newPlan = { ...plan };
+                if (newPlan[key]) delete newPlan[key];
+                if (newPlan[fallbackKey]) delete newPlan[fallbackKey];
 
                 setPlan(newPlan);
                 setEditingDay(null);
@@ -616,7 +712,10 @@
 
             const currentVbt1Rm = calculateVbt1Rm();
             const effectiveVbt1Rm = currentVbt1Rm > 0 ? currentVbt1Rm : (saved1RMs[vbtExercise] || 0);
-            const recommendedVbtWeight = (effectiveVbt1Rm > 0) ? effectiveVbt1Rm / (1 + (parseInt(vbtTargetReps) + (10 - parseFloat(vbtTargetRpe))) / 30) : 0;
+            
+            // Aplicamos la misma corrección de Epley modificado (reps - 1) para la herramienta VBT
+            const vbtTheoreticalReps = parseInt(vbtTargetReps) + Math.max(0, 10 - parseFloat(vbtTargetRpe));
+            const recommendedVbtWeight = (effectiveVbt1Rm > 0 && vbtTheoreticalReps > 0) ? effectiveVbt1Rm / (1 + (vbtTheoreticalReps - 1) / 30) : 0;
 
             // --- Lógica Tests Personalizados ---
             const handleAddTest = () => {
@@ -719,8 +818,8 @@
                                     onChange={(e) => setSelectedYear(parseInt(e.target.value))}
                                     className="bg-transparent border-none text-[10px] font-bold text-[#F97316] outline-none cursor-pointer appearance-none px-1"
                                 >
-                                    {[...Array(60)].map((_, i) => {
-                                        const y = 2026 + i;
+                                    {[...Array(100)].map((_, i) => {
+                                        const y = 2010 + i;
                                         return <option key={y} value={y} className="bg-[#141417] text-white">{y}</option>;
                                     })}
                                 </select>
@@ -776,9 +875,14 @@
                                 <div className="w-9 h-9 bg-gradient-to-br from-[#F97316] to-[#EAB308] rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/20"><SamuraiFireHelmet size={20} className="text-black" /></div>
                                 <h1 className="text-xl font-black tracking-tighter text-[#F4F4F5]">SPRINT <span className="text-[#F97316]">&amp;</span> RELAX</h1>
                             </div>
-                            <button onClick={() => setShowExitConfirm(true)} className="w-8 h-8 flex items-center justify-center rounded-full bg-[#1F1F23] border border-[#27272A] text-[#A1A1AA] hover:text-white active:scale-90 transition-all">
-                                <Icon name="fa-solid fa-arrow-right-from-bracket" size={14} />
-                            </button>
+                            <div className="flex items-center gap-2">
+                                <button onClick={() => setIsDarkMode(!isDarkMode)} className="w-8 h-8 flex items-center justify-center rounded-full bg-[#1F1F23] border border-[#27272A] text-[#A1A1AA] hover:text-white active:scale-90 transition-all">
+                                    {isDarkMode ? <Icon name="fa-solid fa-moon" size={14} /> : <Icon name="fa-solid fa-sun" size={14} />}
+                                </button>
+                                <button onClick={() => setShowExitConfirm(true)} className="w-8 h-8 flex items-center justify-center rounded-full bg-[#1F1F23] border border-[#27272A] text-[#A1A1AA] hover:text-white active:scale-90 transition-all">
+                                    <Icon name="fa-solid fa-arrow-right-from-bracket" size={14} />
+                                </button>
+                            </div>
                         </div>
                     </header>
 
@@ -850,7 +954,14 @@
                         {activeTab === 'editor' && (
                             <div className="space-y-6 animate-in slide-in-from-right-4 duration-300 pb-32">
                                 <div className="flex items-center justify-between mb-2">
-                                    <button onClick={() => { setEditingDay(null); setActiveTab('calendario'); }} className="flex items-center gap-2 p-2 -ml-2 text-[#A1A1AA] text-[11px] font-black uppercase tracking-widest active:text-[#F97316] active:bg-[#18181B] rounded-lg transition-all"><ArrowLeft size={16}/> Volver</button>
+                                    <div className="flex items-center gap-1">
+                                        <button onClick={() => { setEditingDay(null); setActiveTab('calendario'); }} className="flex items-center gap-2 p-2 -ml-2 text-[#A1A1AA] text-[11px] font-black uppercase tracking-widest active:text-[#F97316] active:bg-[#18181B] rounded-lg transition-all"><ArrowLeft size={16}/> Volver</button>
+                                        {(plan[`${editingDay?.year}-${editingDay?.week}-${editingDay?.day}`] || plan[`${editingDay?.week}-${editingDay?.day}`]) && (
+                                            <button onClick={deleteSession} className="flex items-center gap-1.5 p-2 text-red-500/80 hover:text-red-500 text-[11px] font-black uppercase tracking-widest active:bg-red-500/10 rounded-lg transition-all">
+                                                <Trash2 size={14}/> Borrar
+                                            </button>
+                                        )}
+                                    </div>
                                     <div className="text-right">
                                         <span className="text-[9px] font-black text-[#52525B] uppercase block tracking-widest mb-0.5">{editingDay?.year} · Meso {currentMesocycle}</span>
                                         <span className="text-[10px] font-black text-[#F97316] uppercase tracking-tighter">
