@@ -232,6 +232,14 @@
                         ]
                     },
                     options: {
+                        layout: {
+                            padding: {
+                                top: 30,
+                                bottom: 50,
+                                left: 45,
+                                right: 45
+                            }
+                        },
                         responsive: true,
                         maintainAspectRatio: false,
                         interaction: { mode: 'index', intersect: false },
