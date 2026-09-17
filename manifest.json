@@ -479,6 +479,17 @@
                 return `${mins}:${secs.padStart(4, '0')}`;
             };
 
+            const getPaceKm = (vamKmh, percent) => {
+                if (vamKmh === 0) return "0:00";
+                const targetVamKmh = vamKmh * (percent / 100);
+                if (targetVamKmh === 0) return "0:00";
+                const minsPerKm = 60 / targetVamKmh;
+                const mins = Math.floor(minsPerKm);
+                const secs = Math.round((minsPerKm - mins) * 60);
+                if (secs === 60) return `${mins + 1}:00`;
+                return `${mins}:${secs.toString().padStart(2, '0')}`;
+            };
+
             const bw = parseFloat(pullupBw) || 0;
             const aw = parseFloat(pullupAw) || 0;
             const reps = parseInt(pullupReps) || 0;
@@ -1333,22 +1344,27 @@
                                                 <div className="pt-4 pb-2 text-center bg-gray-50 rounded-[16px] p-5 border border-gray-200">
                                                     <div className="text-[12px] font-black uppercase text-gray-500 tracking-widest mb-1">VAM Estimada</div>
                                                     <div className="text-5xl font-black text-orange-500 tracking-tighter">{currentVam.toFixed(2)} <span className="text-xl text-gray-400 tracking-normal">km/h</span></div>
-                                                    <div className="text-[16px] font-bold text-gray-600 mt-2 uppercase tracking-widest">{getPace100m(currentVam, 100)} / 100m</div>
+                                                    <div className="text-[16px] font-bold text-gray-600 mt-2 uppercase tracking-widest">{getPaceKm(currentVam, 100)} / km <span className="text-gray-300 mx-1">|</span> {getPace100m(currentVam, 100)} / 100m</div>
                                                 </div>
                                             )}
                                         </div>
 
                                         {currentVam > 0 && (
                                             <div className="p-5 rounded-[24px] border bg-white border-gray-200 space-y-5 shadow-sm">
-                                                 <h3 className="text-[13px] font-black text-gray-500 uppercase tracking-widest text-center">Ritmos de Entrenamiento / 100m</h3>
+                                                 <h3 className="text-[13px] font-black text-gray-500 uppercase tracking-widest text-center">Ritmos de Entrenamiento</h3>
                                                  <div className="grid grid-cols-2 gap-3">
-                                                    {[80, 85, 90, 95, 100, 105, 110, 115, 120].map(pct => (
+                                                    {[60, 65, 70, 75, 80, 85, 90, 95, 100, 105, 110, 115, 120].map(pct => (
                                                         <div key={pct} className={`flex justify-between items-center p-4 rounded-[14px] border transition-all ${pct === 100 ? 'border-orange-300 bg-orange-50 shadow-md shadow-orange-500/10' : 'border-gray-200 bg-gray-50'}`}>
                                                             <div className="flex flex-col">
                                                                 <span className={`text-[13px] font-black ${pct === 100 ? 'text-orange-500' : 'text-gray-500'}`}>{pct}% VAM</span>
-                                                                <span className="text-[12px] font-bold text-red-500/80 mt-0.5 flex items-center gap-1"><i className="fa-solid fa-heart text-[10px]"></i> {getKarvonenHR(pct)} lpm</span>
+                                                                {pct <= 105 && (
+                                                                    <span className="text-[12px] font-bold text-red-500/80 mt-0.5 flex items-center gap-1"><i className="fa-solid fa-heart text-[10px]"></i> {getKarvonenHR(pct)} lpm</span>
+                                                                )}
                                                             </div>
-                                                            <span className={`text-[17px] font-black ${pct === 100 ? 'text-gray-900' : 'text-gray-700'}`}>{getPace100m(currentVam, pct)}</span>
+                                                            <div className="flex flex-col items-end">
+                                                                <span className={`text-[17px] leading-none font-black ${pct === 100 ? 'text-gray-900' : 'text-gray-700'}`}>{getPaceKm(currentVam, pct)}</span>
+                                                                <span className={`text-[12px] font-bold mt-1 ${pct === 100 ? 'text-orange-500/80' : 'text-gray-400'}`}>{getPace100m(currentVam, pct)} <span className="text-[10px] font-bold opacity-80">/100m</span></span>
+                                                            </div>
                                                         </div>
                                                     ))}
                                                  </div>
@@ -1394,18 +1410,20 @@
 
                                         {currentSwimPace > 0 && (
                                             <div className="p-5 rounded-[24px] border bg-white border-gray-200 space-y-5 shadow-sm">
-                                                 <h3 className="text-[13px] font-black text-gray-500 uppercase tracking-widest text-center">Ritmos de Entrenamiento</h3>
-                                                 <div className="grid grid-cols-2 gap-3">
-                                                    {[80, 85, 90, 95, 100, 105, 110, 115, 120].map(pct => (
+                                                <h3 className="text-[13px] font-black text-gray-500 uppercase tracking-widest text-center">Ritmos de Entrenamiento</h3>
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    {[60, 65, 70, 75, 80, 85, 90, 95, 100, 105, 110, 115, 120].map(pct => (
                                                         <div key={pct} className={`flex justify-between items-center p-4 rounded-[14px] border transition-all ${pct === 100 ? 'border-orange-300 bg-orange-50 shadow-md shadow-orange-500/10' : 'border-gray-200 bg-gray-50'}`}>
-                                                            <span className={`text-[13px] font-black ${pct === 100 ? 'text-orange-500' : 'text-gray-500'}`}>{pct}% Pace</span>
+                                                            <div className="flex flex-col">
+                                                                <span className={`text-[13px] font-black ${pct === 100 ? 'text-orange-500' : 'text-gray-500'}`}>{pct}%</span>
+                                                            </div>
                                                             <div className="flex flex-col items-end">
-                                                                <span className={`text-[17px] font-black ${pct === 100 ? 'text-gray-900' : 'text-gray-700'}`}>{getSwimPace100m(currentSwimPace, pct)}</span>
-                                                                <span className={`text-[11px] font-bold uppercase tracking-widest mt-0.5 ${pct === 100 ? 'text-orange-500' : 'text-gray-400'}`}>{getSwimPace25m(currentSwimPace, pct)} / 25m</span>
+                                                                <span className={`text-[17px] leading-none font-black ${pct === 100 ? 'text-gray-900' : 'text-gray-700'}`}>{getSwimPace100m(currentSwimPace, pct)}</span>
+                                                                <span className={`text-[12px] font-bold mt-1 ${pct === 100 ? 'text-orange-500/80' : 'text-gray-400'}`}>{getSwimPace25m(currentSwimPace, pct)} <span className="text-[10px] font-bold opacity-80">/25m</span></span>
                                                             </div>
                                                         </div>
                                                     ))}
-                                                 </div>
+                                                </div>
                                             </div>
                                         )}
                                     </div>
